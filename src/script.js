@@ -264,62 +264,40 @@ window.improveExperience = async (index) => {
   btn.disabled = true;
 
   const content = `Company: ${exp.company || 'N/A'}\nRole: ${exp.title || 'N/A'}\nDuration: ${exp.date || 'N/A'}\nDescription: ${exp.description || ''}`;
+  const prompt = `
+    You are an expert HR resume consultant.
+    Rewrite the following work experience professionally:
+    - Use bullet points
+    - Add measurable impact
+    - Use action verbs
+    - Make it ATS optimized
+    - Keep it realistic
+
+    User Input:
+    ${content}
+
+    Return improved bullet points only.
+  `;
 
   try {
-    const apiKey = (typeof process !== 'undefined' && process.env.GEMINI_API_KEY) || import.meta.env.VITE_GEMINI_API_KEY;
-    if (!apiKey) {
-      console.error("API Key missing. Please set GEMINI_API_KEY or VITE_GEMINI_API_KEY.");
-      throw new Error('API Key missing. Please check your environment variables.');
-    }
-    
-    const ai = new GoogleGenAI({ apiKey });
-    const prompt = `
-      You are an expert HR resume consultant.
-      Rewrite the following work experience professionally:
-      - Use bullet points
-      - Add measurable impact
-      - Use action verbs
-      - Make it ATS optimized
-      - Keep it realistic
-
-      User Input:
-      ${content}
-
-      Return improved bullet points only.
-    `;
-
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
+    const res = await fetch('/api/ai-improve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
     });
-
-    const improved = response.text?.trim();
-    if (improved) {
-      resumeData.experience[index].description = improved;
+    
+    if (!res.ok) throw new Error('Backend API failed');
+    
+    const data = await res.json();
+    if (data.text) {
+      resumeData.experience[index].description = data.text;
       renderDynamicSection('experience');
       updatePreview();
+    } else {
+      throw new Error('No text returned from AI');
     }
   } catch (error) {
-    console.error("Gemini Frontend Error:", error);
-    
-    // Fallback to backend
-    try {
-      const res = await fetch('/api/ai-improve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
-      });
-      const data = await res.json();
-      if (data.text) {
-        resumeData.experience[index].description = data.text;
-        renderDynamicSection('experience');
-        updatePreview();
-        return;
-      }
-    } catch (fallbackError) {
-      console.error("AI Fallback Error:", fallbackError);
-    }
-    
+    console.error("AI Improvement Error:", error);
     alert('AI Improvement failed. Please check your connection and try again.');
   } finally {
     btn.innerText = originalText;
@@ -426,61 +404,40 @@ async function improveObjective() {
   btn.innerText = 'Improving...';
   btn.disabled = true;
 
+  const prompt = `
+    You are a professional resume writer.
+    Improve the following career objective to make it:
+    - Professional
+    - ATS-friendly
+    - Impactful
+    - Concise (3-4 lines)
+    - Industry relevant
+
+    User Input:
+    "${objective}"
+
+    Return only the improved version.
+  `;
+
   try {
-    const apiKey = (typeof process !== 'undefined' && process.env.GEMINI_API_KEY) || import.meta.env.VITE_GEMINI_API_KEY;
-    if (!apiKey) {
-      console.error("API Key missing. Please set GEMINI_API_KEY or VITE_GEMINI_API_KEY.");
-      throw new Error('API Key missing. Please check your environment variables.');
-    }
-
-    const ai = new GoogleGenAI({ apiKey });
-    const prompt = `
-      You are a professional resume writer.
-      Improve the following career objective to make it:
-      - Professional
-      - ATS-friendly
-      - Impactful
-      - Concise (3-4 lines)
-      - Industry relevant
-
-      User Input:
-      "${objective}"
-
-      Return only the improved version.
-    `;
-
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
+    const res = await fetch('/api/ai-improve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
     });
-
-    const improved = response.text?.trim();
-    if (improved) {
-      resumeData.objective = improved;
-      document.getElementById('objective').value = improved;
+    
+    if (!res.ok) throw new Error('Backend API failed');
+    
+    const data = await res.json();
+    if (data.text) {
+      resumeData.objective = data.text;
+      document.getElementById('objective').value = data.text;
       updatePreview();
+    } else {
+      throw new Error('No text returned from AI');
     }
   } catch (error) {
-    console.error("Gemini Frontend Error:", error);
-    
-    // Fallback to backend
-    try {
-      const res = await fetch('/api/ai-improve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
-      });
-      const data = await res.json();
-      if (data.text) {
-        resumeData.objective = data.text;
-        document.getElementById('objective').value = data.text;
-        updatePreview();
-        return;
-      }
-    } catch (fallbackError) {
-      console.error("AI Fallback Error:", fallbackError);
-    }
-    
+    console.error("AI Improvement Error:", error);
     alert('AI Improvement failed. Please check your connection and try again.');
   } finally {
     btn.innerText = '✨ AI Improve';
@@ -496,60 +453,39 @@ async function improveSkills() {
   btn.innerText = 'Improving...';
   btn.disabled = true;
 
+  const prompt = `
+    You are a professional resume writer.
+    Improve the following skills list to make it:
+    - Professional and categorized (if applicable)
+    - ATS-friendly
+    - Consistent in formatting
+    - Industry relevant
+
+    User Input:
+    "${skills}"
+
+    Return only the improved version as a comma-separated list or neatly categorized text.
+  `;
+
   try {
-    const apiKey = (typeof process !== 'undefined' && process.env.GEMINI_API_KEY) || import.meta.env.VITE_GEMINI_API_KEY;
-    if (!apiKey) {
-      console.error("API Key missing. Please set GEMINI_API_KEY or VITE_GEMINI_API_KEY.");
-      throw new Error('API Key missing. Please check your environment variables.');
-    }
-
-    const ai = new GoogleGenAI({ apiKey });
-    const prompt = `
-      You are a professional resume writer.
-      Improve the following skills list to make it:
-      - Professional and categorized (if applicable)
-      - ATS-friendly
-      - Consistent in formatting
-      - Industry relevant
-
-      User Input:
-      "${skills}"
-
-      Return only the improved version as a comma-separated list or neatly categorized text.
-    `;
-
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
+    const res = await fetch('/api/ai-improve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
     });
-
-    const improved = response.text?.trim();
-    if (improved) {
-      resumeData.skills = improved;
-      document.getElementById('skills').value = improved;
+    
+    if (!res.ok) throw new Error('Backend API failed');
+    
+    const data = await res.json();
+    if (data.text) {
+      resumeData.skills = data.text;
+      document.getElementById('skills').value = data.text;
       updatePreview();
+    } else {
+      throw new Error('No text returned from AI');
     }
   } catch (error) {
-    console.error("Gemini Frontend Error:", error);
-    
-    // Fallback to backend
-    try {
-      const res = await fetch('/api/ai-improve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
-      });
-      const data = await res.json();
-      if (data.text) {
-        resumeData.skills = data.text;
-        document.getElementById('skills').value = data.text;
-        updatePreview();
-        return;
-      }
-    } catch (fallbackError) {
-      console.error("AI Fallback Error:", fallbackError);
-    }
-    
+    console.error("AI Improvement Error:", error);
     alert('AI Improvement failed. Please check your connection and try again.');
   } finally {
     btn.innerText = '✨ AI Improve';
